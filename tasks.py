@@ -10,7 +10,7 @@ from PyDeconv import deconv_image
 
 
 @task(name="display")
-def display_images(image_path="../train/1456.png",net_path='net_maxout.h5'):
+def display_images(image_path="train/1.png",net_path='net.h5'):
     image =  scipy.ndimage.imread(image_path)
     weights_h5 = h5py.File(net_path, 'r')
 
@@ -51,7 +51,7 @@ def display_images(image_path="../train/1456.png",net_path='net_maxout.h5'):
 
 
 @task(name="generate")
-def generate_images(image_path="../train/21.png",net_path='net_maxout.h5'):
+def generate_images(image_path="train/1.png",net_path='net.h5',full=False):
     image =  scipy.ndimage.imread(image_path)
     weights_h5 = h5py.File(net_path, 'r')
 
@@ -70,10 +70,14 @@ def generate_images(image_path="../train/21.png",net_path='net_maxout.h5'):
 
     output = h5py.File('output.h5', 'w')
 
-    for j in range(len(weights)):
-        layer = output.create_group(str(j))
-        for i in range(weights[j].shape[1]):
-            im = deconv_image(image,weights,j+1,i,maxouts)
-            output[str(j)].create_dataset(str(i), data=im)
-
+    if not full:
+        for j in range(len(weights)):
+            layer = output.create_group(str(j))
+            for i in range(weights[j].shape[1]):
+                im = deconv_image(image,weights,j+1,i,maxouts)
+                output[str(j)].create_dataset(str(i), data=im)
+    else:
+        for i in range(len(weights)):
+            im = deconv_image(image,weights,i+1,'all',maxouts)
+            output.create_dataset(str(i), data=im)
 

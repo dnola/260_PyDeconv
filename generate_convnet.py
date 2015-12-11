@@ -64,7 +64,7 @@ def dump_weights(net,filename):
             print(e)
             continue
 
-    weights_hdf5["0"].attrs['activation'] = "relu"
+    # weights_hdf5["0"].attrs['activation'] = "relu"
     weights_hdf5["0"].attrs['maxpool_x'] = 2
     weights_hdf5["0"].attrs['maxpool_y'] = 2
     # weights_hdf5["1"].attrs['maxpool_x'] = 2
@@ -97,7 +97,7 @@ X=np.array(X,dtype=np.float32)
 print("loading test...")
 X_test = []
 X_test_ids = []
-for i,f in enumerate(glob.glob()):
+for i,f in enumerate(glob.glob(test_glob)):
     im = scipy.ndimage.imread(f)
     im = np.swapaxes(im,0,2)
     X_test.append(im)
@@ -124,8 +124,8 @@ net = NeuralNet(
         ('maxout1', layers.MaxPool2DLayer),
         ('conv2', layers.Conv2DLayer),
         ('conv3', layers.Conv2DLayer),
-        ('conv4', layers.Conv2DLayer),
-        ('conv5', layers.Conv2DLayer),
+        # ('conv4', layers.Conv2DLayer),
+        # ('conv5', layers.Conv2DLayer),
         ('dense', layers.DenseLayer),
         ('dense2', layers.DenseLayer),
         ('output', layers.DenseLayer),
@@ -136,13 +136,13 @@ net = NeuralNet(
     conv1_num_filters=10, conv1_filter_size=(3, 3), conv1_nonlinearity=lasagne.nonlinearities.rectify,
     conv2_num_filters=10, conv2_filter_size=(3, 3), conv2_nonlinearity=lasagne.nonlinearities.rectify,
     conv3_num_filters=10, conv3_filter_size=(3, 3), conv3_nonlinearity=lasagne.nonlinearities.rectify,
-    conv4_num_filters=10, conv4_filter_size=(3, 3), conv4_nonlinearity=lasagne.nonlinearities.rectify,
-    conv5_num_filters=10, conv5_filter_size=(3, 3), conv5_nonlinearity=lasagne.nonlinearities.rectify,
+    # conv4_num_filters=10, conv4_filter_size=(3, 3), conv4_nonlinearity=lasagne.nonlinearities.rectify,
+    # conv5_num_filters=10, conv5_filter_size=(3, 3), conv5_nonlinearity=lasagne.nonlinearities.rectify,
 
     maxout1_pool_size=2,
 
-    dense_num_units=1024,dense_W=GlorotUniform(),
-    dense2_num_units=1024,dense2_W=GlorotUniform(),
+    dense_num_units=512,dense_W=GlorotUniform(),
+    dense2_num_units=512,dense2_W=GlorotUniform(),
 
     output_nonlinearity=lasagne.nonlinearities.softmax, output_num_units=len(y[0]),
 
@@ -162,7 +162,7 @@ net.fit(X,y)
 
 ######################### Save Network ##########################
 
-dump_weights(net,'net_maxout_deep.h5')
+dump_weights(net,'net.h5')
 
 
 ######################### Generate Kaggle Submission ##########################
@@ -177,5 +177,5 @@ for idx,i in enumerate(X_test_ids):
     final_str+=","
     final_str+=preds[idx]
 
-with open('voter_output.csv','w') as f:
+with open('network_output.csv','w') as f:
     f.write(final_str)
