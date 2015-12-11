@@ -17,18 +17,19 @@ def normalize(image):
 
     return image
 
-def get_switches(current,maxpool):
+def get_switches(current,maxpool,maxpool_shape):
     # print("getting switches")
     current=np.array(current)
-    switches = np.zeros((current.shape[0],current.shape[1],int(current.shape[2]/2)*2,int(current.shape[3]/2)*2))
+    size = maxpool_shape[0]
+    switches = np.zeros((current.shape[0],current.shape[1],int(current.shape[2]/size)*size,int(current.shape[3]/size)*size))
 
     # print("before shape",switches.shape)
     for k1idx, k1 in enumerate(current):
         for k2idx, k2 in enumerate(k1):
             # print("before", k2[:4,:4])
-            while k2.shape[0]%2!=0:
+            while k2.shape[0]%size!=0:
                 k2=k2[:-1,:-1]
-            blocks = view_as_blocks(k2,(2,2))
+            blocks = view_as_blocks(k2,maxpool_shape)
             for x in blocks:
                 for y in x:
                     idx = np.unravel_index(y.argmax(), y.shape)
@@ -55,7 +56,7 @@ def forward_pass(current,weights,num_deconvs,maxouts):
             maxpool_shape = tuple(list(map(lambda x:int(x), list(maxouts[i]))))
             maxpool = downsample.max_pool_2d(current, maxpool_shape, ignore_border=True)
 
-            switch_list.append(get_switches(current.eval()[:],maxpool))
+            switch_list.append(get_switches(current.eval()[:],maxpool,maxpool_shape))
             # print("pre",current.eval().shape)
             current=maxpool
             # print(current.eval().shape)
@@ -74,10 +75,11 @@ def downward_pass(current,weights,num_deconvs,maxouts,switch_list):
 
         if maxouts[i] != -1 and i!=num_deconvs-1:
             # print("Pooling")
+            maxpool_shape = tuple(list(map(lambda x:int(x), list(maxouts[i]))))
             try:
-                current = upsample_switches(current.eval()[:],switch_list[i])
+                current = upsample_switches(current.eval()[:],switch_list[i],maxpool_shape)
             except:
-                current = upsample_switches(current[:],switch_list[i])
+                current = upsample_switches(current[:],switch_list[i],maxpool_shape)
 
         current = lasagne.nonlinearities.rectify(current)
         current = theano.tensor.nnet.conv.conv2d(current, down[i],border_mode="full")
@@ -114,19 +116,19 @@ def deconv_image(image_in,weights_in,num_deconvs,kernel,maxouts):
     current = np.swapaxes(current,0,2)
     return current
 
-def upsample_switches(current,switches):
-
-    diff = int((switches.shape[-1] - current.shape[-1]*2)/4)
+def upsample_switches(current,switches,maxpool_shape):
+    size = maxpool_shape[0]
+    diff = int((switches.shape[-1] - current.shape[-1]*size)/(size*size))
     current = np.pad(current, pad_width=((0,0),(0,0),(diff,diff),(diff,diff)), mode='constant', constant_values=0)
     # print("diff",diff)
 
-    new = np.zeros((current.shape[0],current.shape[1],int(current.shape[2])*2,int(current.shape[3])*2))
+    new = np.zeros((current.shape[0],current.shape[1],int(current.shape[2])*size,int(current.shape[3])*size))
     for k1idx, k1 in enumerate(current):
         for k2idx, k2 in enumerate(k1):
             # print(current[0,0,:4,:4])
-            new[k1idx,k2idx,:,:] = k2.repeat(2, axis=0).repeat(2, axis=1)
+            new[k1idx,k2idx,:,:] = k2.repeat(size, axis=0).repeat(size, axis=1)
             # print(current[0,0,:4,:4])
 
-    diff = int((switches.shape[-1] - new.shape[-1])/2)
+    diff = int((switches.shape[-1] - new.shape[-1])/size)
     new = np.pad(new, pad_width=((0,0),(0,0),(diff,diff),(diff,diff)), mode='constant', constant_values=0)
     return np.array(np.multiply(switches,new),dtype=np.float32)
