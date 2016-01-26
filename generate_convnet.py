@@ -23,6 +23,7 @@ theano.gof.cc.get_module_cache().clear()
 def float32(k):
     return np.cast['float32'](k)
 
+
 class EarlyStopping(object):
     def __init__(self, patience=20):
         self.patience = patience
@@ -43,6 +44,15 @@ class EarlyStopping(object):
                 self.best_valid, self.best_valid_epoch))
             nn.load_params_from(self.best_weights)
             raise StopIteration()
+
+class AdjustVariable(object):
+    def __init__(self, name):
+        self.name = name
+
+
+    def __call__(self, nn, train_history):
+        getattr(nn, self.name).set_value(getattr(nn, self.name)/2.0)
+
 
 def dump_weights(net,filename):
     input_shape=net.layers_[0].shape
@@ -78,6 +88,7 @@ def dump_weights(net,filename):
 train_glob = 'C:\\Users\\davidnola\\Documents\\Programming\\PyDeconv\\train\\*.png'
 train_labels = 'trainLabels.csv'
 test_glob = 'C:\\Users\\davidnola\\Documents\\Programming\\PyDeconv\\test\\*.png'
+
 
 
 label_file = pandas.read_csv(train_labels)
@@ -121,10 +132,11 @@ net = NeuralNet(
     layers=[
         ('input', layers.InputLayer),
         ('conv1', layers.Conv2DLayer),
-        ('maxout1', layers.MaxPool2DLayer),
         ('conv2', layers.Conv2DLayer),
+        ('maxout1', layers.MaxPool2DLayer),
         ('conv3', layers.Conv2DLayer),
-        # ('conv4', layers.Conv2DLayer),
+        ('conv4', layers.Conv2DLayer),
+        ('maxout2', layers.MaxPool2DLayer),
         # ('conv5', layers.Conv2DLayer),
         ('dense', layers.DenseLayer),
         ('dense2', layers.DenseLayer),
@@ -138,16 +150,17 @@ net = NeuralNet(
     conv3_num_filters=16, conv3_filter_size=(3, 3), conv3_nonlinearity=lasagne.nonlinearities.rectify,
 
     maxout1_pool_size=2,
+    maxout2_pool_size=2,
 
     dense_num_units=256,dense_W=GlorotUniform(),
     dense2_num_units=256,dense2_W=GlorotUniform(),
 
     output_nonlinearity=lasagne.nonlinearities.softmax, output_num_units=len(y[0]),
 
-    on_epoch_finished=[EarlyStopping()],
+    on_epoch_finished=[EarlyStopping(),AdjustVariable('update_learning_rate')],
 
     update=nesterov_momentum,
-    update_learning_rate=theano.shared(float32(0.00005)),
+    update_learning_rate=theano.shared(float32(0.01)),
     update_momentum=theano.shared(float32(0.90)),
 
     regression=True,
