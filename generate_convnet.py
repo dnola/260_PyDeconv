@@ -16,7 +16,7 @@ from sklearn.preprocessing import LabelEncoder,OneHotEncoder
 
 import h5py
 
-
+theano.gof.cc.get_module_cache().clear()
 ######################### Start Helper Class/Function Definitions ##########################
 
 
@@ -75,9 +75,9 @@ def dump_weights(net,filename):
 
 ######################### Start Preprocessing ##########################
 
-train_glob = '../train/*.png'
+train_glob = 'C:\\Users\\davidnola\\Documents\\Programming\\PyDeconv\\train\\*.png'
 train_labels = 'trainLabels.csv'
-test_glob = '/Users/davidnola/Documents/test/*.png'
+test_glob = 'C:\\Users\\davidnola\\Documents\\Programming\\PyDeconv\\test\\*.png'
 
 
 label_file = pandas.read_csv(train_labels)
@@ -87,7 +87,7 @@ print("loading train...")
 X = []
 y = []
 for i,f in enumerate(glob.glob(train_glob)):
-    g_id = int(((f.split('/')[2]).split('.')[0]))
+    g_id = int((f.split('\\')[-1]).split('.')[0])
     im = scipy.ndimage.imread(f)
     im = np.swapaxes(im,0,2)
     X.append(im)
@@ -97,16 +97,16 @@ X=np.array(X,dtype=np.float32)
 print("loading test...")
 X_test = []
 X_test_ids = []
-for i,f in enumerate(glob.glob(test_glob)):
+for i,f in enumerate(glob.glob(test_glob)[:10]):
     im = scipy.ndimage.imread(f)
     im = np.swapaxes(im,0,2)
     X_test.append(im)
-    g_id = int(((f.split('/')[5]).split('.')[0]))
+    g_id = int(((f.split('\\')[-1]).split('.')[0]))
     X_test_ids.append(g_id)
 
 X_test=np.array(X_test,dtype=np.float32)
 
-print(X_test.shape,len(X_test_ids))
+print(X.shape,len(X_test_ids))
 
 label_encoder = LabelEncoder()
 one_hot = OneHotEncoder()
@@ -133,32 +133,32 @@ net = NeuralNet(
     # layer parameters:
     input_shape=(None,3, 32,32),
 
-    conv1_num_filters=10, conv1_filter_size=(3, 3), conv1_nonlinearity=lasagne.nonlinearities.rectify,
-    conv2_num_filters=10, conv2_filter_size=(3, 3), conv2_nonlinearity=lasagne.nonlinearities.rectify,
-    conv3_num_filters=10, conv3_filter_size=(3, 3), conv3_nonlinearity=lasagne.nonlinearities.rectify,
-    # conv4_num_filters=10, conv4_filter_size=(3, 3), conv4_nonlinearity=lasagne.nonlinearities.rectify,
-    # conv5_num_filters=10, conv5_filter_size=(3, 3), conv5_nonlinearity=lasagne.nonlinearities.rectify,
+    conv1_num_filters=16, conv1_filter_size=(3, 3), conv1_nonlinearity=lasagne.nonlinearities.rectify,
+    conv2_num_filters=16, conv2_filter_size=(3, 3), conv2_nonlinearity=lasagne.nonlinearities.rectify,
+    conv3_num_filters=16, conv3_filter_size=(3, 3), conv3_nonlinearity=lasagne.nonlinearities.rectify,
 
     maxout1_pool_size=2,
 
-    dense_num_units=512,dense_W=GlorotUniform(),
-    dense2_num_units=512,dense2_W=GlorotUniform(),
+    dense_num_units=256,dense_W=GlorotUniform(),
+    dense2_num_units=256,dense2_W=GlorotUniform(),
 
     output_nonlinearity=lasagne.nonlinearities.softmax, output_num_units=len(y[0]),
 
     on_epoch_finished=[EarlyStopping()],
 
     update=nesterov_momentum,
-    update_learning_rate=theano.shared(float32(0.0001)),
+    update_learning_rate=theano.shared(float32(0.00005)),
     update_momentum=theano.shared(float32(0.90)),
 
     regression=True,
-    max_epochs=500,
+    max_epochs=750,
     verbose=10,
     )
 
+
 print("Fitting net...")
 net.fit(X,y)
+print(len(net.layers_))
 
 ######################### Save Network ##########################
 
