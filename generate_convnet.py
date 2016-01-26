@@ -51,7 +51,7 @@ class AdjustVariable(object):
 
 
     def __call__(self, nn, train_history):
-        getattr(nn, self.name).set_value(getattr(nn, self.name)/2.0)
+        getattr(nn, self.name).set_value(float32(getattr(nn, self.name).get_value()*.9))
 
 
 def dump_weights(net,filename):
@@ -148,23 +148,24 @@ net = NeuralNet(
     conv1_num_filters=16, conv1_filter_size=(3, 3), conv1_nonlinearity=lasagne.nonlinearities.rectify,
     conv2_num_filters=16, conv2_filter_size=(3, 3), conv2_nonlinearity=lasagne.nonlinearities.rectify,
     conv3_num_filters=16, conv3_filter_size=(3, 3), conv3_nonlinearity=lasagne.nonlinearities.rectify,
+    conv4_num_filters=16, conv4_filter_size=(3, 3), conv4_nonlinearity=lasagne.nonlinearities.rectify,
 
     maxout1_pool_size=2,
     maxout2_pool_size=2,
 
-    dense_num_units=256,dense_W=GlorotUniform(),
-    dense2_num_units=256,dense2_W=GlorotUniform(),
+    dense_num_units=128,dense_W=GlorotUniform(),
+    dense2_num_units=128,dense2_W=GlorotUniform(),
 
     output_nonlinearity=lasagne.nonlinearities.softmax, output_num_units=len(y[0]),
 
     on_epoch_finished=[EarlyStopping(),AdjustVariable('update_learning_rate')],
 
     update=nesterov_momentum,
-    update_learning_rate=theano.shared(float32(0.01)),
+    update_learning_rate=theano.shared(float32(0.001)),
     update_momentum=theano.shared(float32(0.90)),
 
     regression=True,
-    max_epochs=750,
+    max_epochs=50,
     verbose=10,
     )
 
