@@ -69,7 +69,7 @@ def downward_pass(current,weights,num_deconvs,maxouts,switch_list):
     print("starting downward pass")
     # Downward pass
     down = [np.swapaxes(W[:, :, ::-1, ::-1],0,1) for W in weights]
-
+    switch_counter=0
     for i in reversed(range(num_deconvs)):
         print("down",i)
 
@@ -77,9 +77,10 @@ def downward_pass(current,weights,num_deconvs,maxouts,switch_list):
             # print("Pooling")
             maxpool_shape = tuple(list(map(lambda x:int(x), list(maxouts[i]))))
             try:
-                current = upsample_switches(current.eval()[:],switch_list[i],maxpool_shape)
+                current = upsample_switches(current.eval()[:],switch_list[switch_counter],maxpool_shape)
             except:
-                current = upsample_switches(current[:],switch_list[i],maxpool_shape)
+                current = upsample_switches(current[:],switch_list[switch_counter],maxpool_shape)
+            switch_counter += 1
 
         current = lasagne.nonlinearities.rectify(current)
         current = theano.tensor.nnet.conv.conv2d(current, down[i],border_mode="full")

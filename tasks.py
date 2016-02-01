@@ -79,5 +79,7 @@ def generate_images(image_path="train/1.png",net_path='net.h5',full=False):
     else:
         for i in range(len(weights)):
             im = deconv_image(image,weights,i+1,'all',maxouts)
+            plt.imshow(im)
             output.create_dataset(str(i), data=im)
+            plt.show()
 
