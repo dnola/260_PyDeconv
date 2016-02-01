@@ -75,8 +75,8 @@ def dump_weights(net,filename):
             continue
 
     # weights_hdf5["0"].attrs['activation'] = "relu"
-    weights_hdf5["0"].attrs['maxpool_x'] = 2
-    weights_hdf5["0"].attrs['maxpool_y'] = 2
+    weights_hdf5["1"].attrs['maxpool_x'] = 2
+    weights_hdf5["1"].attrs['maxpool_y'] = 2
     # weights_hdf5["1"].attrs['maxpool_x'] = 2
     # weights_hdf5["1"].attrs['maxpool_y'] = 2
 
@@ -85,9 +85,9 @@ def dump_weights(net,filename):
 
 ######################### Start Preprocessing ##########################
 
-train_glob = 'C:\\Users\\davidnola\\Documents\\Programming\\PyDeconv\\train\\*.png'
+train_glob = 'C:\\Users\\davidnola\\Downloads\\train\\*.png'
 train_labels = 'trainLabels.csv'
-test_glob = 'C:\\Users\\davidnola\\Documents\\Programming\\PyDeconv\\test\\*.png'
+test_glob = 'C:\\Users\\davidnola\\Downloads\\test\\*.png'
 
 
 
@@ -153,8 +153,8 @@ net = NeuralNet(
     maxout1_pool_size=2,
     maxout2_pool_size=2,
 
-    dense_num_units=128,dense_W=GlorotUniform(),
-    dense2_num_units=128,dense2_W=GlorotUniform(),
+    dense_num_units=256,dense_W=GlorotUniform(),
+    dense2_num_units=256,dense2_W=GlorotUniform(),
 
     output_nonlinearity=lasagne.nonlinearities.softmax, output_num_units=len(y[0]),
 
@@ -165,7 +165,7 @@ net = NeuralNet(
     update_momentum=theano.shared(float32(0.90)),
 
     regression=True,
-    max_epochs=50,
+    max_epochs=1000,
     verbose=10,
     )
 
